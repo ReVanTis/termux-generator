@@ -222,15 +222,21 @@ build_bootstraps() {
 # Funktion, um Bootstraps zu kopieren
 move_bootstraps() {
     if [[ "$TERMUX_APP_TYPE" == "f-droid" ]]; then
-        local app_assets_dir="app/src/main/assets/"
+        # Bootstraps are packed into lib/<abi>/libtermux-bootstrap.so by the app's
+        # ndkBuild (app/src/main/cpp/termux-bootstrap-zip.S) and extracted in pure
+        # Java by TermuxInstaller - executing a bundled xz is blocked by SELinux
+        # (execute_no_trans) on modern Android.
+        local bootstrap_dest="termux-apps-main/termux-app/app/src/main/cpp"
     else
         local app_assets_dir="src/main/assets/"
     fi
     if [ -z "${DISABLE_TERMINAL}" ]; then
-        mkdir -p "termux-apps-main/termux-app/$app_assets_dir"
-        mv termux-packages-main/bootstrap-* "termux-apps-main/termux-app/$app_assets_dir"
         if [[ "$TERMUX_APP_TYPE" == "f-droid" ]]; then
-            mv termux-packages-main/xz-* "termux-apps-main/termux-app/$app_assets_dir"
+            mkdir -p "$bootstrap_dest"
+            mv termux-packages-main/bootstrap-*.zip "$bootstrap_dest/"
+        else
+            mkdir -p "termux-apps-main/termux-app/$app_assets_dir"
+            mv termux-packages-main/bootstrap-* "termux-apps-main/termux-app/$app_assets_dir"
         fi
     else
         for zip in termux-packages-main/bootstrap-*; do

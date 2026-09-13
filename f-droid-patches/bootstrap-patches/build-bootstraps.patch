@@ -1,3 +1,20 @@
+diff --git a/packages/liblzma/build.sh b/packages/liblzma/build.sh
+index e275f47..65d4fbf 100644
+--- a/packages/liblzma/build.sh
++++ b/packages/liblzma/build.sh
+@@ -15,6 +15,10 @@ TERMUX_PKG_EXTRA_CONFIGURE_ARGS="
+ --enable-sandbox=no
+ "
+ 
++termux_step_pre_configure() {
++	LDFLAGS+=" -Wl,-rpath=$TERMUX__ROOTFS"
++}
++
+ termux_step_post_massage() {
+ 	# Do not forget to bump revision of reverse dependencies and rebuild them
+ 	# after SOVERSION is changed.
+diff --git a/scripts/bootstrap/termux-bootstrap-second-stage.sh b/scripts/bootstrap/termux-bootstrap-second-stage.sh
+index 723993d..53cd2e7 100755
 --- a/scripts/bootstrap/termux-bootstrap-second-stage.sh
 +++ b/scripts/bootstrap/termux-bootstrap-second-stage.sh
 @@ -106,7 +106,7 @@ run_bootstrap_second_stage() {
@@ -9,6 +26,8 @@
  			log "If you still want to force run it again (not recommended), \
  like in case of previous failure and it must be re-run again for testing, \
  then delete the '@TERMUX_BOOTSTRAP__BOOTSTRAP_SECOND_STAGE_DIR@/@TERMUX_BOOTSTRAP__BOOTSTRAP_SECOND_STAGE_ENTRY_POINT_SUBFILE@.lock' \
+diff --git a/scripts/build-bootstraps.sh b/scripts/build-bootstraps.sh
+index 53bb59d..cd77d19 100755
 --- a/scripts/build-bootstraps.sh
 +++ b/scripts/build-bootstraps.sh
 @@ -29,6 +29,8 @@ BOOTSTRAP_ANDROID10_COMPATIBLE=false
@@ -122,7 +141,7 @@
  # Build deb files for package and its dependencies deb from source for arch
  build_package() {
  
-@@ -218,6 +211,12 @@ add_termux_bootstrap_second_stage_files() {
+@@ -218,6 +315,12 @@ add_termux_bootstrap_second_stage_files() {
  		> "${BOOTSTRAP_ROOTFS}/${TERMUX_BOOTSTRAP__BOOTSTRAP_SECOND_STAGE_DIR}/$TERMUX_BOOTSTRAP__BOOTSTRAP_SECOND_STAGE_ENTRY_POINT_SUBFILE"
  	chmod 700 "${BOOTSTRAP_ROOTFS}/${TERMUX_BOOTSTRAP__BOOTSTRAP_SECOND_STAGE_DIR}/$TERMUX_BOOTSTRAP__BOOTSTRAP_SECOND_STAGE_ENTRY_POINT_SUBFILE"
  
@@ -135,21 +154,10 @@
  	# TODO: Remove it when Termux app supports `pacman` bootstraps installation.
  	sed -e "s|@TERMUX_PREFIX@|${TERMUX_PREFIX}|g" \
  		-e "s|@TERMUX__PREFIX__PROFILE_D_DIR@|${TERMUX__PREFIX__PROFILE_D_DIR}|g" \
-@@ -234,19 +336,27 @@ add_termux_bootstrap_second_stage_files() {
- # Information about symlinks is stored in file SYMLINKS.txt.
- create_bootstrap_archive() {
+@@ -236,6 +339,18 @@ create_bootstrap_archive() {
  
--	echo $'\n\n\n'"[*] Creating 'bootstrap-${1}.zip'..."
-+	echo $'\n\n\n'"[*] Creating 'bootstrap-${1}.tar.xz'..."
+ 	echo $'\n\n\n'"[*] Creating 'bootstrap-${1}.zip'..."
  	(cd "${BOOTSTRAP_ROOTFS}/${TERMUX_PREFIX}"
--		# Do not store symlinks in bootstrap archive.
--		# Instead, put all information to SYMLINKS.txt
--		while read -r -d '' link; do
--			echo "$(readlink "$link")←${link}" >> SYMLINKS.txt
--			rm -f "$link"
--		done < <(find . -type l -print0)
--
--		zip -r9 "${BOOTSTRAP_TMPDIR}/bootstrap-${1}.zip" ./*
 +		rm -rf opt/*host-tools*
 +		rm -rf opt/aosp
 +		rm -rf opt/binutils*
@@ -162,18 +170,10 @@
 +			rm -rf share/man
 +			mkdir -p share/man
 +		fi
-+		XZ_OPT=-e9 tar cJf "${BOOTSTRAP_TMPDIR}/bootstrap-${1}.tar.xz" ./*
- 	)
- 
--	mv -f "${BOOTSTRAP_TMPDIR}/bootstrap-${1}.zip" "$TERMUX_PACKAGES_DIRECTORY/"
-+	mv -f "${BOOTSTRAP_TMPDIR}/bootstrap-${1}.tar.xz" "$TERMUX_PACKAGES_DIRECTORY/"
-+	mkdir -p "$TERMUX_PACKAGES_DIRECTORY/xz-${1}"
-+	cp -f "${TERMUX_PREFIX}/bin/xz" "$TERMUX_PACKAGES_DIRECTORY/xz-${1}/xz"
-+	cp -f "$(readlink -f "${TERMUX_PREFIX}/lib/liblzma.so")" "$TERMUX_PACKAGES_DIRECTORY/xz-${1}/liblzma.so.5"
- 
- 	echo "[*] Finished successfully (${1})."
- 
-@@ -370,6 +374,9 @@ main() {
+ 		# Do not store symlinks in bootstrap archive.
+ 		# Instead, put all information to SYMLINKS.txt
+ 		while read -r -d '' link; do
+@@ -370,6 +485,9 @@ main() {
  					return 1
  				fi
  				;;
@@ -183,7 +183,7 @@
  			-f)
  				BUILD_PACKAGE_OPTIONS+=("-f")
  				FORCE_BUILD_PACKAGES=1
-@@ -480,10 +591,20 @@ main() {
+@@ -480,10 +598,20 @@ main() {
  		done
  
  		# Extract all debs.
@@ -206,16 +206,3 @@
  
  		# Create bootstrap archive.
  		create_bootstrap_archive "$TERMUX_ARCH" || return $?
---- a/packages/liblzma/build.sh
-+++ b/packages/liblzma/build.sh
-@@ -15,6 +15,10 @@ TERMUX_PKG_EXTRA_CONFIGURE_ARGS="
- --enable-sandbox=no
- "
- 
-+termux_step_pre_configure() {
-+	LDFLAGS+=" -Wl,-rpath=$TERMUX__ROOTFS"
-+}
-+
- termux_step_post_massage() {
- 	# Do not forget to bump revision of reverse dependencies and rebuild them
- 	# after SOVERSION is changed.

@@ -160,7 +160,8 @@ jobs:
                 $DISABLE_STYLING \
                 $DISABLE_GUI \
                 $DISABLE_X11 \
-                $PLUGIN
+                $PLUGIN \
+                $TERMUX_APP__SHARED_USER_ID
       - name: Upload artifacts
         uses: actions/upload-artifact@v4.6.0
         with:

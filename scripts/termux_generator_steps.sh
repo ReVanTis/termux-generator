@@ -131,18 +131,25 @@ EOF
 patch_apps() {
     if [[ "$TERMUX_APP__PACKAGE_NAME" == "com.termux" ]]; then
         # Vanilla-named build: official bootstraps are downloaded by gradle at
-        # build time (local-bootstraps.patch not wanted), and sharedUserId must
-        # be dropped so the app survives on devices with a stale OEM-owned
-        # "com.termux" shared-user record (no-shared-user.patch wanted).
-        apply_patches "$TERMUX_APP_TYPE-patches/app-patches" termux-apps-main "^local-bootstraps\.patch$"
-        return
+        # build time (local-bootstraps.patch not wanted). sharedUserId is either
+        # dropped (no-shared-user.patch) or replaced with a custom id, so the app
+        # survives on devices with a stale OEM-owned "com.termux" shared-user record.
+        if [ -n "${TERMUX_APP__SHARED_USER_ID}" ]; then
+            apply_patches "$TERMUX_APP_TYPE-patches/app-patches" termux-apps-main "^(local-bootstraps|no-shared-user)\.patch$"
+        else
+            apply_patches "$TERMUX_APP_TYPE-patches/app-patches" termux-apps-main "^local-bootstraps\.patch$"
+        fi
+    else
+        apply_patches "$TERMUX_APP_TYPE-patches/app-patches" termux-apps-main "^no-shared-user\.patch$"
+
+        replace_termux_name termux-apps-main "$TERMUX_APP__PACKAGE_NAME"
+
+        migrate_termux_folder_tree termux-apps-main "$TERMUX_APP__PACKAGE_NAME"
     fi
 
-    apply_patches "$TERMUX_APP_TYPE-patches/app-patches" termux-apps-main "^no-shared-user\.patch$"
-
-    replace_termux_name termux-apps-main "$TERMUX_APP__PACKAGE_NAME"
-
-    migrate_termux_folder_tree termux-apps-main "$TERMUX_APP__PACKAGE_NAME"
+    if [ -n "${TERMUX_APP__SHARED_USER_ID}" ]; then
+        set_shared_user_id termux-apps-main "$TERMUX_APP__SHARED_USER_ID"
+    fi
 }
 
 build_termux_x11() {

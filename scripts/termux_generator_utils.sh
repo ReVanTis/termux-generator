@@ -25,6 +25,19 @@ apply_patches() {
     popd
 }
 
+# Alle Manifeste (Haupt-App und Addons) auf eine eigene sharedUserId setzen
+set_shared_user_id() {
+    local targetdir="$1"
+    local shared_id="$2"
+
+    find "$targetdir" -type f -name AndroidManifest.xml -path '*/src/main/*' | while read -r file; do
+        if grep -q 'android:sharedUserId=' "$file"; then
+            echo "[*] Setting sharedUserId=\"$shared_id\" in $file"
+            portable_sed_i -e "s|android:sharedUserId=\"[^\"]*\"|android:sharedUserId=\"$shared_id\"|g" "$file"
+        fi
+    done
+}
+
 replace_termux_name() {
     if [[ "$TERMUX_APP__PACKAGE_NAME" == "com.termux" ]]; then
         return

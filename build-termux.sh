@@ -6,6 +6,7 @@ cd "$(realpath "$(dirname "$0")")"
 
 TERMUX_GENERATOR_HOME="$(pwd)"
 TERMUX_APP__PACKAGE_NAME="com.termux"
+TERMUX_APP__SHARED_USER_ID=""
 TERMUX_APP_TYPE="f-droid"
 DO_NOT_CLEAN=""
 TERMUX_GENERATOR_PLUGIN=""
@@ -40,6 +41,10 @@ show_usage() {
     echo " -h, --help                       Show this help."
     echo " -a, --add PKG_LIST               Include additional packages in bootstrap archive."
     echo " -n, --name APP_NAME              Specify TERMUX_APP__PACKAGE_NAME name."
+    echo " --shared-user-id SHARED_USER_ID    Specify a custom android:sharedUserId for the app and"
+    echo "                                  its addons, instead of the default (package name)."
+    echo "                                  Useful when a device carries a stale system-owned"
+    echo "                                  shared-user record for the default id."
     echo " -t, --type APP_TYPE              Specify the Termux project to fork [f-droid, play-store]. Defaults to f-droid."
     echo " --architectures ARCH_LIST        Specify the bootstrap architectures to include in a comma-separated list."
     echo " -p, --plugin PLUGIN              Specify a plugin from the plugins folder to apply during building."
@@ -105,6 +110,16 @@ while (($# > 0)); do
                 shift 1
             else
                 echo "[!] Option '--name' requires an argument."
+                show_usage
+                exit 1
+            fi
+            ;;
+        --shared-user-id)
+            if [ $# -gt 1 ] && [ -n "$2" ] && [[ $2 != -* ]]; then
+                TERMUX_APP__SHARED_USER_ID="$2"
+                shift 1
+            else
+                echo "[!] Option '--shared-user-id' requires an argument."
                 show_usage
                 exit 1
             fi
@@ -198,6 +213,12 @@ TERMUX_GENERATOR_CONTAINER_NAME="$TERMUX_APP__PACKAGE_NAME-$TERMUX_APP_TYPE-pack
 # which gradle downloads and checksum-verifies itself, so skip compiling them.
 if [[ "$TERMUX_APP_TYPE" == "f-droid" && "$TERMUX_APP__PACKAGE_NAME" == "com.termux" ]]; then
     DISABLE_BOOTSTRAP=1
+fi
+
+if [ -n "$TERMUX_APP__SHARED_USER_ID" ] && [[ "$TERMUX_APP__SHARED_USER_ID" == "com.termux" ]]; then
+    echo "[!] '--shared-user-id com.termux' is the default (and the one stale OEM records"
+    echo "     typically poison); choose a different id or omit the option."
+    exit 2
 fi
 
 if [ -z "${DO_NOT_CLEAN}" ]; then

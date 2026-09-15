@@ -9,11 +9,16 @@ portable_sed_i() {
 apply_patches() {
     local srcdir=$(realpath "$1")
     local targetdir=$(realpath "$2")
+    local exclude_re="${3:-}"
     local patches=$(find "$srcdir" -type f | sort)
 
     pushd "$targetdir"
 
     for patch in $patches; do
+        if [ -n "$exclude_re" ] && [[ "$(basename "$patch")" =~ $exclude_re ]]; then
+            echo "[*] Skipping patch $(basename "$patch")"
+            continue
+        fi
         patch -p1 < "$patch"
     done
 

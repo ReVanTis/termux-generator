@@ -1,0 +1,18 @@
+--- a/termux-app/app/src/main/AndroidManifest.xml
++++ b/termux-app/app/src/main/AndroidManifest.xml
+@@ -1,8 +1,12 @@
+ <?xml version="1.0" encoding="utf-8"?>
+ <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+     xmlns:tools="http://schemas.android.com/tools"
+     android:installLocation="internalOnly"
+-    android:sharedUserId="${TERMUX_PACKAGE_NAME}"
+     android:sharedUserLabel="@string/shared_user_label">
++    <!-- termux-generator: for builds named exactly "com.termux" the
++         sharedUserId is dropped so the app does not conflict with stale
++         shared-user records left on devices where an OEM once preinstalled
++         its own com.termux build (such records fail signature checks at
++         boot, which gets the real app uninstalled). -->
+ 
+     <uses-feature
+         android:name="android.hardware.touchscreen"
+         android:required="false" />

@@ -194,6 +194,12 @@ done
 
 TERMUX_GENERATOR_CONTAINER_NAME="$TERMUX_APP__PACKAGE_NAME-$TERMUX_APP_TYPE-package-builder"
 
+# Vanilla "com.termux" f-droid builds reuse the official bootstrap archives,
+# which gradle downloads and checksum-verifies itself, so skip compiling them.
+if [[ "$TERMUX_APP_TYPE" == "f-droid" && "$TERMUX_APP__PACKAGE_NAME" == "com.termux" ]]; then
+    DISABLE_BOOTSTRAP=1
+fi
+
 if [ -z "${DO_NOT_CLEAN}" ]; then
     # Validierung und Ausführung
     check_names

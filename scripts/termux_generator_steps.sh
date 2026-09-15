@@ -129,11 +129,16 @@ EOF
 
 # Funktion, um die App zu patchen
 patch_apps() {
-    apply_patches "$TERMUX_APP_TYPE-patches/app-patches" termux-apps-main
-
     if [[ "$TERMUX_APP__PACKAGE_NAME" == "com.termux" ]]; then
+        # Vanilla-named build: official bootstraps are downloaded by gradle at
+        # build time (local-bootstraps.patch not wanted), and sharedUserId must
+        # be dropped so the app survives on devices with a stale OEM-owned
+        # "com.termux" shared-user record (no-shared-user.patch wanted).
+        apply_patches "$TERMUX_APP_TYPE-patches/app-patches" termux-apps-main "^local-bootstraps\.patch$"
         return
     fi
+
+    apply_patches "$TERMUX_APP_TYPE-patches/app-patches" termux-apps-main "^no-shared-user\.patch$"
 
     replace_termux_name termux-apps-main "$TERMUX_APP__PACKAGE_NAME"
 

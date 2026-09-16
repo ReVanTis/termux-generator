@@ -150,6 +150,10 @@ patch_apps() {
     if [ -n "${TERMUX_APP__SHARED_USER_ID}" ]; then
         set_shared_user_id termux-apps-main "$TERMUX_APP__SHARED_USER_ID"
     fi
+
+    if [ -n "${TERMUX_APP__VERSION_CODE}" ]; then
+        set_version_code termux-apps-main "$TERMUX_APP__VERSION_CODE"
+    fi
 }
 
 build_termux_x11() {

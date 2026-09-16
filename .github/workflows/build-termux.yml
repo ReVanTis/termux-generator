@@ -12,6 +12,9 @@ on:
       shared-user-id:
         description: "Specify a custom android:sharedUserId for the app and its addons (e.g. to avoid stale OEM shared-user records for the default id)."
         required: false
+      version-code:
+        description: "Specify a custom versionCode for the app and its addons (a very high value stops stores from offering updates)."
+        required: false
       type:
         description: "Specify the Termux project to fork [f-droid, play-store]. Defaults to f-droid."
         required: false
@@ -96,6 +99,9 @@ jobs:
       - name: Set --shared-user-id
         if: "${{ github.event.inputs.shared-user-id != '' }}"
         run: echo "TERMUX_APP__SHARED_USER_ID=--shared-user-id ${{ github.event.inputs.shared-user-id }}" >> $GITHUB_ENV
+      - name: Set --version-code
+        if: "${{ github.event.inputs.version-code != '' }}"
+        run: echo "TERMUX_APP__VERSION_CODE=--version-code ${{ github.event.inputs.version-code }}" >> $GITHUB_ENV
       - name: Set --type
         if: "${{ github.event.inputs.type != '' }}"
         run: echo "TERMUX_APP_TYPE=--type ${{ github.event.inputs.type }}" >> $GITHUB_ENV
@@ -161,7 +167,8 @@ jobs:
                 $DISABLE_GUI \
                 $DISABLE_X11 \
                 $PLUGIN \
-                $TERMUX_APP__SHARED_USER_ID
+                $TERMUX_APP__SHARED_USER_ID \
+                $TERMUX_APP__VERSION_CODE
       - name: Upload artifacts
         uses: actions/upload-artifact@v4.6.0
         with:

@@ -7,6 +7,7 @@ cd "$(realpath "$(dirname "$0")")"
 TERMUX_GENERATOR_HOME="$(pwd)"
 TERMUX_APP__PACKAGE_NAME="com.termux"
 TERMUX_APP__SHARED_USER_ID=""
+TERMUX_APP__VERSION_CODE=""
 TERMUX_APP_TYPE="f-droid"
 DO_NOT_CLEAN=""
 TERMUX_GENERATOR_PLUGIN=""
@@ -45,6 +46,9 @@ show_usage() {
     echo "                                  its addons, instead of the default (package name)."
     echo "                                  Useful when a device carries a stale system-owned"
     echo "                                  shared-user record for the default id."
+    echo " --version-code VERSION_CODE        Specify a custom versionCode for the app and its addons."
+    echo "                                  A very high value prevents stores from offering"
+    echo "                                  updates for the installed packages."
     echo " -t, --type APP_TYPE              Specify the Termux project to fork [f-droid, play-store]. Defaults to f-droid."
     echo " --architectures ARCH_LIST        Specify the bootstrap architectures to include in a comma-separated list."
     echo " -p, --plugin PLUGIN              Specify a plugin from the plugins folder to apply during building."
@@ -120,6 +124,16 @@ while (($# > 0)); do
                 shift 1
             else
                 echo "[!] Option '--shared-user-id' requires an argument."
+                show_usage
+                exit 1
+            fi
+            ;;
+        --version-code)
+            if [ $# -gt 1 ] && [ -n "$2" ] && [[ $2 =~ ^[0-9]+$ ]]; then
+                TERMUX_APP__VERSION_CODE="$2"
+                shift 1
+            else
+                echo "[!] Option '--version-code' requires a positive integer argument."
                 show_usage
                 exit 1
             fi

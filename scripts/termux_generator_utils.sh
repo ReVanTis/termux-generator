@@ -30,10 +30,25 @@ set_shared_user_id() {
     local targetdir="$1"
     local shared_id="$2"
 
-    find "$targetdir" -type f -name AndroidManifest.xml -path '*/src/main/*' | while read -r file; do
+    # Cover all source manifests, including flavor manifests (e.g. termux-x11's
+    # sharedUid variant), but skip build output directories.
+    find "$targetdir" -type f -name AndroidManifest.xml -path '*/src/*' -not -path '*/build/*' | while read -r file; do
         if grep -q 'android:sharedUserId=' "$file"; then
             echo "[*] Setting sharedUserId=\"$shared_id\" in $file"
             portable_sed_i -e "s|android:sharedUserId=\"[^\"]*\"|android:sharedUserId=\"$shared_id\"|g" "$file"
+        fi
+    done
+}
+
+# Alle App-Module (Haupt-App und Addons) auf eine eigene versionCode setzen
+set_version_code() {
+    local targetdir="$1"
+    local version_code="$2"
+
+    find "$targetdir" -type f -name build.gradle -not -path '*/build/*' | while read -r file; do
+        if grep -qE '^\s*versionCode [0-9]+' "$file"; then
+            echo "[*] Setting versionCode $version_code in $file"
+            portable_sed_i -E -e "s|^(\s*)versionCode [0-9]+|\1versionCode $version_code|" "$file"
         fi
     done
 }
